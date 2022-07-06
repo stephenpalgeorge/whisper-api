@@ -14,4 +14,13 @@ router.post('/', async (req, res, next) => {
     }
 });
 
+router.delete('/:id', async (req, res, next) => {
+    try {
+        const deletedDialogue = await Dialogue.findOneAndDelete({id: req.params.id});
+        res.json({ dialogue: deletedDialogue });
+    } catch (e) {
+        next(e);
+    }
+});
+
 module.exports.dialogue = router;
