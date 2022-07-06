@@ -1,0 +1,21 @@
+{
+  "name": "whisper-api",
+  "version": "1.0.0",
+  "description": "server and api for the whisper app",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "author": "stephen pal-george",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "socket.io": "^4.5.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.18"
+  }
+}
