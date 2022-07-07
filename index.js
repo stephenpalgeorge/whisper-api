@@ -11,6 +11,7 @@ const mongoose = require('mongoose');
 const { Server } = require('socket.io');
 
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
 const { dialogue: dialogueRoutes } = require('./src/routes');
@@ -30,6 +31,7 @@ const io = new Server(server, {
 // APPLY MIDDLEWARE
 // ----------
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(cors());
 
 // ----------
