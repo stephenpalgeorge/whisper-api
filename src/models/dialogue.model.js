@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const dialogueSchema = new Schema({
     name: { type: String, required: true },
     wid: String,
+    key: String,
     password: { type: String, required: true },
 });
 
