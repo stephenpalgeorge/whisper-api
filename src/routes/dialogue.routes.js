@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const { Router } = require('express');
 const { Dialogue } = require('../models');
 const { key, wid } = require('../utils');
@@ -41,7 +42,8 @@ router.post('/:id/auth', async (req, res, next) => {
             return next('Incorrect password');
         }
         // if correct password, set a cookie in the res with JWT that includes dialogue ID
-        res.status(200).cookie('dialogue:auth', req.params.id, {httpOnly: true}).json({ dialogue });
+        const token = jwt.sign({key: req.params.id}, process.env.TOKEN_SECRET);
+        res.status(200).cookie('dialogue:auth', token, {httpOnly: true}).json({ dialogue });
     } catch (e) {
         next(e);
     }
