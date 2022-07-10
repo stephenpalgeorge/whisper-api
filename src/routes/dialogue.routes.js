@@ -47,6 +47,11 @@ router.post('/:id/auth', async (req, res, next) => {
     }
 });
 
+router.get('/:id', async (req, res, next) => {
+    // check headers for corresponding `dialogue:auth` cookie.
+    // If that exists, we can return the `dialogue` info, otherwise, send a 403.
+});
+
 router.delete('/:id', async (req, res, next) => {
     try {
         const deletedDialogue = await Dialogue.findOneAndDelete({id: req.params.id});

@@ -32,7 +32,7 @@ const io = new Server(server, {
 // ----------
 app.use(bodyParser.json());
 app.use(cookieParser());
-app.use(cors());
+app.use(cors({origin: process.env.WEB_APP_ORIGIN, credentials: true}));
 
 // ----------
 // ROUTES
