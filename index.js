@@ -17,6 +17,13 @@ const cors = require('cors');
 const { dialogue: dialogueRoutes } = require('./src/routes');
 
 // ----------
+// APPLY MIDDLEWARE
+// ----------
+app.use(bodyParser.json());
+app.use(cors({origin: process.env.WEB_APP_ORIGIN, credentials: true}));
+app.use(cookieParser());
+
+// ----------
 // VARIABLE DECLARATIONS
 // ----------
 const server = http.createServer(app);
@@ -26,13 +33,6 @@ const io = new Server(server, {
         origin: process.env.WEB_APP_ORIGIN,
     }
 });
-
-// ----------
-// APPLY MIDDLEWARE
-// ----------
-app.use(bodyParser.json());
-app.use(cookieParser());
-app.use(cors({origin: process.env.WEB_APP_ORIGIN, credentials: true}));
 
 // ----------
 // ROUTES

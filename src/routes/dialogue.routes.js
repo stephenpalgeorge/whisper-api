@@ -42,16 +42,47 @@ router.post('/:id/auth', async (req, res, next) => {
             return next('Incorrect password');
         }
         // if correct password, set a cookie in the res with JWT that includes dialogue ID
-        const token = jwt.sign({key: req.params.id}, process.env.TOKEN_SECRET);
-        res.status(200).cookie('dialogue:auth', token, {httpOnly: true}).json({ dialogue });
+        const token = jwt.sign({ key: dialogue.key }, process.env.TOKEN_SECRET);
+        res.status(200).cookie('dialogue:auth', token, {
+            httpOnly: true,
+            sameSite: 'none',
+            secure: true,
+        }).json({ dialogue });
     } catch (e) {
         next(e);
     }
 });
 
 router.get('/:id', async (req, res, next) => {
-    // check headers for corresponding `dialogue:auth` cookie.
-    // If that exists, we can return the `dialogue` info, otherwise, send a 403.
+    try {
+        // check headers for corresponding `dialogue:auth` cookie.
+        const auth = req.cookies['dialogue:auth'];
+        if (!auth) {
+            res.status(403).json({ origin: 'auth', message: 'Could not authenticate you for this dialogue.' });
+            return next('Could not authenticate you for this dialogue.');
+        }
+
+        // If that exists, check the 'key' in the jwt payload matches the 'id' in the req params
+        const payload = jwt.decode(auth, process.env.TOKEN_SECRET);
+        console.log(payload);
+        const isMatch = payload.key === req.params.id;
+        if (!isMatch) {
+            res.status(403).json({ origin: 'auth', message: 'Could not authenticate you for this dialogue.'});
+            return next('Could not authenticate you for this dialogue.');
+        }
+
+        // find the dialogue by key, if none exists, send an error
+        const dialogue = await Dialogue.findOne({ key: payload.key });
+        if (!dialogue) {
+            res.status(404).json({ origin: 'auth', message: 'Could not find this dialogue...maybe it has been deleted?'});
+            return next('Could not find this dialogue...maybe it has been deleted?');
+        }
+
+        // all's good, send the dialogue back to the client.
+        res.status(200).json({ dialogue });
+    } catch (e) {
+        next(e);
+    }
 });
 
 router.delete('/:id', async (req, res, next) => {
