@@ -50,8 +50,20 @@ app.use('/api/dialogue', dialogueRoutes);
 // ----------
 io.on('connection', socket => {
     console.log('someone connected');
-    socket.on('dialogue:send-message', message => {
-        io.emit('dialogue:update', message);
+    // we expect `data` from the client to have properties `username`,
+    // `message` and `timestamp`.
+    socket.on('dialogue:send-message', data => {
+        io.emit('dialogue:update', data);
+    });
+
+    // we expect `data` from the client to have properties `username` && `key`.
+    // `username` is the name that the user has chosen when joining the chat,
+    // `key` is the value stored in the DB against Dialogue.key
+    socket.on('dialogue:join', data => {
+        // `join` the user to the dialogue using the `key` as the channel identifier.
+        socket.join(data.key);
+        // send a `join` event back to the client with the user's username.
+        io.to(data.key).emit('dialogue:join', {username: data.username});
     });
 
     socket.on('disconnect', () => {
