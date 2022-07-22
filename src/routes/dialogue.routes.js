@@ -7,14 +7,20 @@ const router = Router();
 
 router.post('/', async (req, res, next) => {
     try {
-        const { name, password } = req.body;
+        // const { name, password } = req.body;
+        const name = req.body['dialogue-name'];
+        const password = req.body['dialogue-password'];
         // generate other field values:
         const dialogueKey = await key.generate('dialogue');
         const dialogueId = await wid.generate('dialogue');
 
+        const data = { name, key: dialogueKey, wid: dialogueId, password };
+        if (req.body['dialogue-description']) data.description = req.body['dialogue-description'];
+
         // create new dialogue and send it back to client
-        const dialogue = new Dialogue({ name, key: dialogueKey, wid: dialogueId, password });
+        const dialogue = new Dialogue(data);
         const newDialogue = await dialogue.save();
+
         res.json({ dialogue: newDialogue });
     } catch (e) {
         next(e);
@@ -64,7 +70,6 @@ router.get('/:id', async (req, res, next) => {
 
         // If that exists, check the 'key' in the jwt payload matches the 'id' in the req params
         const payload = jwt.decode(auth, process.env.TOKEN_SECRET);
-        console.log(payload);
         const isMatch = payload.key === req.params.id;
         if (!isMatch) {
             res.status(403).json({ origin: 'auth', message: 'Could not authenticate you for this dialogue.'});
