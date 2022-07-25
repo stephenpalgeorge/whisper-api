@@ -5,19 +5,26 @@ const { key, wid } = require('../utils');
 
 const router = Router();
 
+/**
+ * @method POST
+ * '/api/dialogue' - create a new dialogue and save it to the database.
+ *
+ */
 router.post('/', async (req, res, next) => {
     try {
-        // const { name, password } = req.body;
+        // get the name and password from the body (these are required fields)
         const name = req.body['dialogue-name'];
         const password = req.body['dialogue-password'];
-        // generate other field values:
+        // generate the uid fields, these are not provided by the user
         const dialogueKey = await key.generate('dialogue');
         const dialogueId = await wid.generate('dialogue');
 
+        // start building the object for the new dialogue
         const data = { name, key: dialogueKey, wid: dialogueId, password };
+        // `dialogue-description` is optional, so we only add it to the data object if it is set
         if (req.body['dialogue-description']) data.description = req.body['dialogue-description'];
 
-        // create new dialogue and send it back to client
+        // create new dialogue and send it back to front-end
         const dialogue = new Dialogue(data);
         const newDialogue = await dialogue.save();
 
@@ -27,6 +34,13 @@ router.post('/', async (req, res, next) => {
     }
 });
 
+/**
+ * @method POST
+ * '/api/dialogue/:id/auth' - authenticate a user for a given dialogue. Authentication results in a
+ * cookie being stored in the user's browser, so they are immediately authenticated for any future
+ * interaction with that dialogue.
+ *
+ */
 router.post('/:id/auth', async (req, res, next) => {
     try {
         // find the dialogue then compare passwords
@@ -47,7 +61,8 @@ router.post('/:id/auth', async (req, res, next) => {
             res.status(403).json({ origin: 'password', message: 'Incorrect password' });
             return next('Incorrect password');
         }
-        // if correct password, set a cookie in the res with JWT that includes dialogue ID
+        // if correct password, set a cookie in the res with JWT that includes dialogue key, and
+        // send the dialogue back to the front-end.
         const token = jwt.sign({ key: dialogue.key }, process.env.TOKEN_SECRET);
         res.status(200).cookie('dialogue:auth', token, {
             httpOnly: true,
@@ -59,6 +74,11 @@ router.post('/:id/auth', async (req, res, next) => {
     }
 });
 
+/**
+ * @method GET
+ * '/api/dialogue/:id' - send a dialogue back to the front-end if the user is authenticated.
+ *
+ */
 router.get('/:id', async (req, res, next) => {
     try {
         // check headers for corresponding `dialogue:auth` cookie.
@@ -90,6 +110,11 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
+/**
+ * @method DELETE
+ * '/api/dialogue/:id' - delete a dialogue from the database; dialogue is found by `id`.
+ *
+ */
 router.delete('/:id', async (req, res, next) => {
     try {
         const deletedDialogue = await Dialogue.findOneAndDelete({id: req.params.id});
