@@ -16,6 +16,11 @@ const dialogueSchema = new Schema({
     // password for accessing the dialogue page - this is encrypted when
     // the model is saved
     password: { type: String, required: true },
+    // RELATIONSHIPS
+    // 'owner' is the ID of the user that created the dialogue
+    owner: { type: Schema.Types.ObjectId, ref: 'User' },
+    // 'admins' is an array of people with administrative permissions
+    admins: { type: [Schema.Types.ObjectId], ref: 'User' },
 });
 
 dialogueSchema.pre('save', async function(next) {

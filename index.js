@@ -14,7 +14,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-const { dialogue: dialogueRoutes } = require('./src/routes');
+const { dialogue: dialogueRoutes, user: userRoutes } = require('./src/routes');
 
 // ----------
 // APPLY MIDDLEWARE
@@ -44,6 +44,7 @@ app.get('/', (req, res) => {
 
 // mount the routes
 app.use('/api/dialogue', dialogueRoutes);
+app.use('/api/user', userRoutes);
 
 // ----------
 // SOCKET IMPLEMENTATION
