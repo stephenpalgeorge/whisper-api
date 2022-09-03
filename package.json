@@ -4,8 +4,8 @@
   "description": "server and api for the whisper app",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "NODE_ENV=production node index.js",
+    "dev": "NODE_ENV=development nodemon index.js"
   },
   "author": "stephen pal-george",
   "license": "ISC",
@@ -21,6 +21,7 @@
     "socket.io": "^4.5.1"
   },
   "devDependencies": {
-    "nodemon": "^2.0.18"
+    "nodemon": "^2.0.18",
+    "winston": "^3.8.1"
   }
 }

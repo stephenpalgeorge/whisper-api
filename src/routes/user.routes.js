@@ -3,9 +3,10 @@ const { Router } = require('express');
 const router = Router();
 const { User } = require('../models');
 const { auth } = require('../middleware');
+const { config } = require('../utils');
 
-router.post('/secret', [auth.access, auth.refresh], (req, res, next) => {
-    res.json({ message: 'you can see the secret', token: req.auth.authToken });
+router.post('/authorise', [auth.access, auth.refresh], (req, res, next) => {
+    res.status(200).json({origin: 'auth-check', message: 'authentication successful'});
 });
 
 /**
@@ -47,14 +48,37 @@ router.post('/login', async (req, res, next) => {
 
         // sign and send back 2 jwts - access and refresh
         const payload = { id: user.id, username: user.username };
-        const authToken = jwt.sign(payload, process.env.AUTH_SECRET);
-        const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET);
+        const authToken = jwt.sign(payload, process.env.AUTH_SECRET, {expiresIn: config.AUTH_TOKEN_EXPIRATION});
+        const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET, {expiresIn: config.REFRESH_TOKEN_EXPIRATION});
         res.status(200).cookie('shh:rt', refreshToken, {
             sameSite: 'none',
             secure: true,
             httpOnly: true,
         }).json({ user, token: authToken });
         // ^ @todo - remove password from user object
+    } catch (e) {
+        next(e);
+    }
+});
+
+
+router.get('/', [auth.access, auth.refresh], async (req, res, next) => {
+    try {
+        // by this point, we know that `req.auth` will exist and have an `id` prop,
+        // as it would otherwise have been rejected by the auth middleware.
+        const id = req.auth.id;
+        // find the user and handle the response:
+        const user = await User.findOne({id});
+        if (!user) {
+            res.status(404).json({ origin: 'Get user', message: 'No user found for that ID' });
+            return next('Could not find user.');
+        }
+
+        const response = {user};
+        // if the authToken/access token failed in the middleware, the refresh middleware
+        // will have generated new tokens, so pass it along in the response
+        if (req.auth.authToken) response['authToken'] = req.auth.authToken;
+        res.json(response);
     } catch (e) {
         next(e);
     }
