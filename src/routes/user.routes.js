@@ -68,7 +68,7 @@ router.get('/', [auth.access, auth.refresh], async (req, res, next) => {
         // as it would otherwise have been rejected by the auth middleware.
         const id = req.auth.id;
         // find the user and handle the response:
-        const user = await User.findOne({id});
+        const user = await User.findOne({id}).populate('Dialogues').exec();
         if (!user) {
             res.status(404).json({ origin: 'Get user', message: 'No user found for that ID' });
             return next('Could not find user.');

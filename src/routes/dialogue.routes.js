@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
 const { Router } = require('express');
-const { Dialogue } = require('../models');
+const { Dialogue, User } = require('../models');
 const { key, wid } = require('../utils');
+const { auth } = require('../middleware');
 
 const router = Router();
 
@@ -10,23 +11,37 @@ const router = Router();
  * '/api/dialogue' - create a new dialogue and save it to the database.
  *
  */
-router.post('/', async (req, res, next) => {
+router.post('/', [auth.access, auth.refresh], async (req, res, next) => {
     try {
         // get the name and password from the body (these are required fields)
         const name = req.body['dialogue-name'];
         const password = req.body['dialogue-password'];
+        // the `req.auth` object is established in the auth middleware.
+        // the user that created the dialogue is saved as its owner.
+        const owner = req.auth.id;
         // generate the uid fields, these are not provided by the user
         const dialogueKey = await key.generate('dialogue');
         const dialogueId = await wid.generate('dialogue');
 
         // start building the object for the new dialogue
-        const data = { name, key: dialogueKey, wid: dialogueId, password };
+        const data = { name, key: dialogueKey, wid: dialogueId, password, owner };
         // `dialogue-description` is optional, so we only add it to the data object if it is set
         if (req.body['dialogue-description']) data.description = req.body['dialogue-description'];
 
         // create new dialogue and send it back to front-end
         const dialogue = new Dialogue(data);
         const newDialogue = await dialogue.save();
+
+        // once the dialogue has successfully been saved, load the 'owner' user
+        // and save the Dialogue id to the user's `Dialogues` property:
+        const user = await User.findOne({ id: owner });
+        if (!user) {
+            res.status(500).json({origin: 'update user dialogues', message: 'Could not add the Dialogue to the user account.'});
+            throw 'Could not add the Dialogue to the user account';
+        }
+
+        user.Dialogues = [...user.Dialogues, newDialogue];
+        await user.save();
 
         res.json({ dialogue: newDialogue });
     } catch (e) {

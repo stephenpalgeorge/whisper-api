@@ -15,8 +15,8 @@ function access(req, res, next) {
         const payload = jwt.verify(AUTH_TOKEN, process.env.AUTH_SECRET);
         // jwt is successfully verified, we attach the relevant information to the request
         // and forward to the next middleware
-        logger.info('Authorised with Auth Token');
-        req.auth = payload;
+        logger.info(`Authorised with Auth Token. ID: ${payload.id}`);
+        req.auth = {id: payload.id, username: payload.username};
         req.isAuth = true;
         next();
     } catch (e) {
@@ -41,20 +41,19 @@ function refresh(req, res, next) {
         const REFRESH_TOKEN = req.cookies['shh:rt'];
         if (!REFRESH_TOKEN || REFRESH_TOKEN.length === 0) {
             res.status(403);
-            throw new Error('Please login');
+            throw new Error('Error: No refresh token');
         }
-        const payload = jwt.verify(REFRESH_TOKEN, process.env.REFRESH_SECRET);
-        payload.timestamp = new Date();
-        const NEW_REFRESH_TOKEN = jwt.sign(payload, process.env.REFRESH_SECRET, {expiresIn: config.REFRESH_TOKEN_EXPIRATION});
-        const NEW_AUTH_TOKEN = jwt.sign(payload, process.env.AUTH_SECRET, {expiresIn: config.AUTH_TOKEN_EXPIRATION});
+        const {id, username} = jwt.verify(REFRESH_TOKEN, process.env.REFRESH_SECRET);
+        const NEW_REFRESH_TOKEN = jwt.sign({id, username}, process.env.REFRESH_SECRET, {expiresIn: config.REFRESH_TOKEN_EXPIRATION});
+        const NEW_AUTH_TOKEN = jwt.sign({id, username}, process.env.AUTH_SECRET, {expiresIn: config.AUTH_TOKEN_EXPIRATION});
         res.cookie('shh:rt', NEW_REFRESH_TOKEN, {
             sameSite: 'none',
             secure: true,
             httpOnly: true,
         });
 
-        logger.info('Authorised with Refresh Token');
-        req.auth = payload;
+        logger.info(`Authorised with Refresh Token. ID: ${id}`);
+        req.auth = {id, username};
         req.isAuth = true;
         req.auth.authToken = NEW_AUTH_TOKEN;
         next();
